@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import axios from 'axios';
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function GeneratePassword() {
   const [password, setPassword] = useState('');
   const [tag, setTag] = useState('');
   const [message, setMessage] = useState('');
+  const passwordRef = useRef(null);
 
   const generate = () => {
     const length = 12;
@@ -17,9 +19,16 @@ export default function GeneratePassword() {
     setMessage('');
   };
 
+  const copyToClipboard = () => {
+    if (passwordRef.current) {
+      passwordRef.current.select();
+      document.execCommand('copy');
+      setMessage('🔒 Contraseña copiada al portapapeles');
+    }
+  };
+
   const savePassword = async () => {
     const user_id = localStorage.getItem('user_id');
-
     if (!password || !user_id) {
       setMessage('⚠️ Genera una contraseña y asegúrate de haber iniciado sesión');
       return;
@@ -45,17 +54,33 @@ export default function GeneratePassword() {
       <button className="btn btn-secondary mb-3" onClick={generate}>
         Generar Contraseña Segura
       </button>
+
       <div className="form-group">
-        <input className="form-control mb-2" value={password} readOnly />
+        <input
+          className="form-control mb-2"
+          value={password}
+          ref={passwordRef}
+          readOnly
+        />
         <input
           className="form-control mb-2"
           placeholder="Etiqueta (opcional)"
           onChange={e => setTag(e.target.value)}
         />
+        <button className="btn btn-outline-primary mb-2" onClick={copyToClipboard}>
+          Copiar Contraseña
+        </button>
+        {password && (
+          <div className="my-3">
+            <QRCodeCanvas value={password} size={128} />
+            <p><small>Escanea el código QR para obtener la contraseña</small></p>
+          </div>
+        )}
         <button className="btn btn-success" onClick={savePassword}>
           Guardar Contraseña
         </button>
       </div>
+
       {message && <div className="alert alert-info mt-3">{message}</div>}
     </div>
   );
