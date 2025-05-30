@@ -66,26 +66,33 @@ def login():
     access_token = create_access_token(identity=user.id)
     return jsonify({'message': 'Inicio de sesión exitoso', 'token': access_token}), 200
 
+
 # --- Guardar contraseña (MongoDB + cifrado) ---
 @app.route('/save-password', methods=['POST'])
 @jwt_required()
 def save_password():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No se enviaron datos'}), 400
+        user_id = get_jwt_identity()
+        print("✅ Usuario autenticado:", user_id)
 
-        raw_password = data.get('password')
+        if not request.is_json:
+            print("❌ El request no tiene JSON válido")
+            return jsonify({'error': 'El contenido debe ser JSON'}), 400
+
+        data = request.get_json()
+        print("📦 JSON recibido:", data)
+
+        password = data.get('password')
         tag = data.get('tag')
 
-        if not raw_password:
+        if not password:
             return jsonify({'error': 'La contraseña es obligatoria'}), 400
 
-        encrypted_password = cipher_suite.encrypt(raw_password.encode())
+        encrypted = cipher_suite.encrypt(password.encode())
 
         mongo.db.passwords.insert_one({
-            'user_id': get_jwt_identity(),
-            'password': encrypted_password.decode(),
+            'user_id': user_id,
+            'password': encrypted.decode(),
             'tag': tag,
             'created_at': datetime.utcnow()
         })
@@ -93,8 +100,9 @@ def save_password():
         return jsonify({'message': 'Contraseña guardada correctamente'}), 201
 
     except Exception as e:
-        print("❌ Error en /save-password:", e)
+        print("❌ Error inesperado:", e)
         return jsonify({'error': 'Error interno del servidor'}), 500
+
 
 # --- Obtener contraseñas guardadas ---
 @app.route('/get-passwords', methods=['GET'])
