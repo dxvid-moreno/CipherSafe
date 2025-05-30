@@ -8,18 +8,24 @@ export default function SavedPasswords() {
   useEffect(() => {
     const fetchPasswords = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/get-passwords', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const userId = localStorage.getItem('user_id');
+        if (!userId) {
+          setError('No hay usuario autenticado.');
+          return;
+        }
+
+        const res = await axios.get(`http://localhost:5000/get-passwords/${userId}`);
         setPasswords(res.data);
       } catch (err) {
-        setError('No se pudieron cargar las contraseñas');
+        console.error(err);
+        setError(err.response?.data?.error || 'No se pudieron cargar las contraseñas');
       }
     };
 
     fetchPasswords();
   }, []);
+
+
 
   return (
     <div className="container mt-5">
@@ -33,7 +39,6 @@ export default function SavedPasswords() {
               <strong>Etiqueta:</strong> {pw.tag || '(sin etiqueta)'}<br />
               <small>Creada: {pw.created_at}</small>
             </div>
-            {/* Aquí podrías añadir un botón "ver", "editar" o "eliminar" más adelante */}
           </li>
         ))}
       </ul>

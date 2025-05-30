@@ -18,23 +18,19 @@ export default function GeneratePassword() {
   };
 
   const savePassword = async () => {
-    if (!password) {
-      setMessage('⚠️ Genera una contraseña antes de guardar');
+    const user_id = localStorage.getItem('user_id');
+
+    if (!password || !user_id) {
+      setMessage('⚠️ Genera una contraseña y asegúrate de haber iniciado sesión');
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post(
-        'http://localhost:5000/save-password',
-        { password, tag },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await axios.post('http://localhost:5000/save-password', {
+        user_id: parseInt(user_id),
+        password,
+        tag
+      });
 
       setMessage(res.data.message || 'Contraseña guardada');
     } catch (err) {
