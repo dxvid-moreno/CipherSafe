@@ -7,17 +7,17 @@
 - Daniel Felipe Bustamante Pérez
 
 ## Instalación
-Crear y activarrentorno virtual
-
-python -m venv venv
-venv/Scripts/activate 
-
-Instalar node
-
+Crear y activar entorno virtual
+```
+    python -m venv venv
+    venv/Scripts/activate 
+```
 Instalar requeriemnts.txt
 ```
     pip install requeriments.txt
 ```
+Instalar node
+
 Instalar las dependencias
 ```
 npm install
