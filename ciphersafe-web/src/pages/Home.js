@@ -5,9 +5,11 @@ export default function Home() {
   return (
     <div className="bg-light min-vh-100 d-flex flex-column">
       <header className="bg-dark text-white p-4">
-        <div className="container">
-          <h1 className="display-4">CipherSafe</h1>
-          <p className="lead">Tu gestor seguro de contraseñas con tecnología QR y cifrado avanzado.</p>
+        <div className="container text-center">
+          <h1 className="display-4 ">CipherSafe</h1>
+          <p className="lead">Protege tus contraseñas con tecnología QR y cifrado de última generación.</p>
+          <p className='lead'>Seguridad moderna, sencilla y siempre a tu alcance.</p>
+
         </div>
       </header>
 
@@ -16,15 +18,14 @@ export default function Home() {
           <div className="col-md-6">
             <h2 className="mb-4">¿Qué es CipherSafe?</h2>
             <p>
-              CipherSafe es una plataforma web y móvil que permite generar, almacenar y verificar contraseñas
-              de forma segura usando códigos QR, autenticación multifactor y cifrado robusto.
+              CipherSafe es una aplicación web y móvil que te permite generar, guardar y verificar tus contraseñas de forma segura. Usa autenticación multifactor, códigos QR y cifrado avanzado para proteger tu información.
             </p>
             <ul className="list-unstyled mt-3">
-              <li>✅ Generación de contraseñas seguras</li>
-              <li>✅ Almacenamiento cifrado</li>
-              <li>✅ Verificación mediante códigos QR</li>
-              <li>✅ Exportación segura en PDF/CSV</li>
-              <li>✅ Compatible con múltiples dispositivos</li>
+              <li>🔐 Crea contraseñas fuertes en segundos </li>
+              <li>🧠 Olvídate de recordarlas: guárdalas de forma cifrada</li>
+              <li>📱 Verifícalas fácilmente con tu cámara y códigos QR</li>
+              <li>📄 Exporta tus claves en PDF o CSV con seguridad</li>
+              <li>💻 Accede desde cualquier dispositivo, en todo momento</li>
             </ul>
             <div className="mt-4">
               <Link to="/register" className="btn btn-primary me-3">

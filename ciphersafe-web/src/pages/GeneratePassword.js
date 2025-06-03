@@ -49,19 +49,14 @@ export default function GeneratePassword() {
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Generar Contraseña</h2>
+    <div className="container mt-5 text-center">
+      <h2 className='text-center mb-4 fw-bold'>Generar Contraseña</h2>
       <button className="btn btn-secondary mb-3" onClick={generate}>
         Generar Contraseña Segura
       </button>
 
-      <div className="form-group">
-        <input
-          className="form-control mb-2"
-          value={password}
-          ref={passwordRef}
-          readOnly
-        />
+      <form className="form-group">
+        <input className="form-control mb-2" value={password} ref={passwordRef} readOnly/>
         <input
           className="form-control mb-2"
           placeholder="Etiqueta (opcional)"
@@ -70,16 +65,18 @@ export default function GeneratePassword() {
         <button className="btn btn-outline-primary mb-2" onClick={copyToClipboard}>
           Copiar Contraseña
         </button>
+
         {password && (
           <div className="my-3">
-            <QRCodeCanvas value={password} size={128} />
+            <QRCodeCanvas value={password} size={128} aria-label="Código QR de la contraseña"  />
             <p><small>Escanea el código QR para obtener la contraseña</small></p>
           </div>
-        )}
+        )} 
+
         <button className="btn btn-success" onClick={savePassword}>
           Guardar Contraseña
         </button>
-      </div>
+      </form>
 
       {message && <div className="alert alert-info mt-3">{message}</div>}
     </div>
