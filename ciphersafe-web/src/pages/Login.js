@@ -1,12 +1,15 @@
+// ciphersafe-web/src/pages/Login.js
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';// Importamos la hoja de estilos que esta en la misma carpeta
+import './Login.css';
+import { useAuth } from '../context/AuthContext'; // Importar useAuth
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' });
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  useAuth(); // Usar el hook useAuth
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,15 +19,16 @@ export default function Login() {
     e.preventDefault();
     try {
       const res = await axios.post('http://localhost:5000/login', form);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user_id', res.data.user_id); // <- AGREGADO
       setMessage(res.data.message);
-      navigate('/generate');
+      // No llamar a login() aquí directamente, solo en OTPVerification
+
+      // Redirigir a la página de verificación de OTP, pasando el user_id
+      navigate('/verify-otp', { state: { userId: res.data.user_id } });
+
     } catch (err) {
       setMessage(err.response?.data?.error || 'Error al iniciar sesión');
     }
   };
-
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
@@ -41,7 +45,5 @@ export default function Login() {
         {message && <div className="alert alert-info mt-3">{message}</div>}
       </div>
     </div>
-
-
   );
 }

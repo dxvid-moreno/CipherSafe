@@ -1,12 +1,15 @@
-import { useState, useRef } from 'react';
+// ciphersafe-web/src/pages/GeneratePassword.js
+import { useState, useRef } from 'react'; // Asegúrate de tener useRef
 import axios from 'axios';
 import { QRCodeCanvas } from 'qrcode.react';
+import { useNavigate } from 'react-router-dom'; // <--- Añade esta importación
 
 export default function GeneratePassword() {
   const [password, setPassword] = useState('');
   const [tag, setTag] = useState('');
   const [message, setMessage] = useState('');
   const passwordRef = useRef(null);
+  const navigate = useNavigate(); // <--- Inicializa useNavigate
 
   const generate = () => {
     const length = 12;
@@ -42,8 +45,12 @@ export default function GeneratePassword() {
       });
 
       setMessage(res.data.message || 'Contraseña guardada');
+      
+      // <--- CAMBIO CLAVE AQUÍ: Redirige a /saved con un estado para indicar un refresh
+      navigate('/saved', { state: { refreshPasswords: true } }); 
+
     } catch (err) {
-      console.error(err);
+      console.error("Error al guardar contraseña:", err); // Asegúrate de ver la salida en la consola del navegador
       setMessage(err.response?.data?.error || 'Error al guardar');
     }
   };
