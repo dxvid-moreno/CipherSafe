@@ -7,20 +7,24 @@ import Login from './pages/Login';
 import GeneratePassword from './pages/GeneratePassword';
 import SavedPasswords from './pages/SavedPassword';
 import OTPVerification from './pages/OTPVerification'; 
+import ForgotPassword from './pages/ForgotPassword'; // <--- Importa el nuevo componente
+import ResetPassword from './pages/ResetPassword';   // <--- Importa el nuevo componente
 import RequireAuth from './components/RequireAuth';
 import Navbar from './components/Navbar';
-import { AuthProvider } from './context/AuthContext'; // Importar AuthProvider
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
     <Router>
-      <AuthProvider> {/* Envuelve toda la aplicación con AuthProvider */}
+      <AuthProvider>
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/verify-otp" element={<OTPVerification />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} /> {/* <--- NUEVA RUTA */}
+          <Route path="/reset-password" element={<ResetPassword />} />   {/* <--- NUEVA RUTA */}
           <Route
             path="/generate"
             element={
