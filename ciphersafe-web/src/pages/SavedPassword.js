@@ -48,6 +48,18 @@ export default function SavedPasswords() {
     }
   };
 
+  const deletePassword = async (id) => {
+  if (!window.confirm("¿Estás seguro de eliminar esta contraseña?")) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/delete-password/${id}`);
+    setPasswords(passwords.filter(p => p.id !== id));
+  } catch (err) {
+    console.error("Error al eliminar contraseña:", err);
+    alert("No se pudo eliminar la contraseña");
+  }
+};
+
   return (
     <div className="container mt-5">
       <h2>Contraseñas Guardadas</h2>
@@ -64,8 +76,14 @@ export default function SavedPasswords() {
               <small>{pw.created_at}</small><br />
               <span>{pw.password}</span>
             </div>
-            <div>
+            <div className="d-flex flex-column align-items-end">
               <QRCodeSVG value={pw.password} size={64} />
+              <button 
+                className="btn btn-sm btn-danger mt-2"
+                onClick={() => deletePassword(pw.id)}
+              >
+                Eliminar
+              </button>
             </div>
           </li>
         ))}

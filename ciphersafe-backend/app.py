@@ -166,6 +166,16 @@ def export(user_id, format):
 
     return jsonify({'error': 'Formato no válido'}), 400
 
+@app.route('/delete-password/<int:password_id>', methods=['DELETE'])
+def delete_password(password_id):
+    entry = PasswordEntry.query.get(password_id)
+    if not entry:
+        return jsonify({'error': 'Entrada no encontrada'}), 404
+
+    db.session.delete(entry)
+    db.session.commit()
+    return jsonify({'message': 'Contraseña eliminada correctamente'}), 200
+
 # Inicializa base de datos si no existe
 with app.app_context():
     db.create_all()

@@ -50,38 +50,46 @@ export default function GeneratePassword() {
 
   return (
     <div className="container mt-5">
-      <h2>Generar Contraseña</h2>
-      <button className="btn btn-secondary mb-3" onClick={generate}>
-        Generar Contraseña Segura
-      </button>
+      <h2 className="mb-4">Generar Contraseña</h2>
 
-      <div className="form-group">
-        <input
-          className="form-control mb-2"
-          value={password}
-          ref={passwordRef}
-          readOnly
-        />
-        <input
-          className="form-control mb-2"
-          placeholder="Etiqueta (opcional)"
-          onChange={e => setTag(e.target.value)}
-        />
-        <button className="btn btn-outline-primary mb-2" onClick={copyToClipboard}>
-          Copiar Contraseña
-        </button>
-        {password && (
-          <div className="my-3">
-            <QRCodeCanvas value={password} size={128} />
-            <p><small>Escanea el código QR para obtener la contraseña</small></p>
-          </div>
-        )}
-        <button className="btn btn-success" onClick={savePassword}>
-          Guardar Contraseña
-        </button>
+      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        {/* Formulario a la izquierda */}
+        <div style={{ flex: 1, minWidth: '280px' }}>
+          <button className="btn btn-secondary mb-3" onClick={generate}>
+            Generar Contraseña Segura
+          </button>
+
+          <input
+            className="form-control mb-2"
+            value={password}
+            ref={passwordRef}
+            readOnly
+          />
+          <input
+            className="form-control mb-2"
+            placeholder="Etiqueta (opcional)"
+            onChange={e => setTag(e.target.value)}
+          />
+          <button className="btn btn-outline-primary mb-2" onClick={copyToClipboard}>
+            Copiar Contraseña
+          </button>
+          <button className="btn btn-success mb-2 ms-3" onClick={savePassword}>
+            Guardar Contraseña
+          </button>
+
+          {message && <div className="alert alert-info mt-3">{message}</div>}
+        </div>
+
+        {/* QR a la derecha */}
+        <div style={{ flex: '0 0 150px', textAlign: 'center' }}>
+          {password && (
+            <>
+              <QRCodeCanvas value={password} size={150} />
+              <p className="mt-2"><small>Escanea el código QR</small></p>
+            </>
+          )}
+        </div>
       </div>
-
-      {message && <div className="alert alert-info mt-3">{message}</div>}
     </div>
   );
 }
