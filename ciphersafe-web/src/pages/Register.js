@@ -20,15 +20,17 @@ export default function Register() {
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Registro</h2>
-      <form onSubmit={handleSubmit}>
-        <input className="form-control my-2" name="username" placeholder="Usuario" onChange={handleChange} />
-        <input className="form-control my-2" name="email" placeholder="Correo" type="email" onChange={handleChange} />
-        <input className="form-control my-2" name="password" placeholder="Contraseña" type="password" onChange={handleChange} />
-        <button className="btn btn-primary" type="submit">Registrarse</button>
-      </form>
-      {message && <div className="alert alert-info mt-3">{message}</div>}
+    <div className="container mt-5 d-flex justify-content-center">
+      <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>
+        <h3 className="card-title text-center mb-4">Registro</h3>
+        <form onSubmit={handleSubmit}>
+          <input className="form-control mb-3" name="username" placeholder="Usuario" onChange={handleChange} />
+          <input className="form-control mb-3" name="email" placeholder="Correo" type="email" onChange={handleChange} />
+          <input className="form-control mb-3" name="password" placeholder="Contraseña" type="password" onChange={handleChange} />
+          <button className="btn btn-primary w-100" type="submit">Registrarse</button>
+        </form>
+        {message && <div className="alert alert-info mt-3">{message}</div>}
+      </div>
     </div>
   );
 }

@@ -26,14 +26,17 @@ export default function Login() {
 
 
   return (
-    <div className="container mt-5">
-      <h2>Inicio de Sesión</h2>
+  <div className="container mt-5 d-flex justify-content-center">
+    <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>
+      <h3 className="card-title text-center mb-4">Inicio de Sesión</h3>
       <form onSubmit={handleSubmit}>
-        <input className="form-control my-2" name="username" placeholder="Usuario" onChange={handleChange} />
-        <input className="form-control my-2" name="password" placeholder="Contraseña" type="password" onChange={handleChange} />
-        <button className="btn btn-success" type="submit">Ingresar</button>
+        <input className="form-control mb-3" name="username" placeholder="Usuario" onChange={handleChange} />
+        <input className="form-control mb-3" name="password" placeholder="Contraseña" type="password" onChange={handleChange} />
+        <button className="btn btn-success w-100" type="submit">Ingresar</button>
       </form>
       {message && <div className="alert alert-info mt-3">{message}</div>}
     </div>
-  );
+  </div>
+);
+
 }
