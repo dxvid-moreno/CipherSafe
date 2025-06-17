@@ -64,9 +64,15 @@ def register():
 def login():
     data = request.get_json()
     user = User.query.filter_by(username=data['username']).first()
+
     if not user or not bcrypt.check_password_hash(user.password, data['password']):
         return jsonify({'error': 'Credenciales inválidas'}), 401
-    return jsonify({'message': 'Inicio de sesión exitoso', 'user_id': user.id}), 200
+
+    return jsonify({
+        'message': 'Inicio de sesión exitoso',
+        'user_id': user.id,
+        'token': 'dummy-token'
+    }), 200
 
 @app.route('/save-password', methods=['POST'])
 def save_password():
@@ -181,4 +187,5 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
