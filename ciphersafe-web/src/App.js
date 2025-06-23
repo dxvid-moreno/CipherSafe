@@ -5,17 +5,19 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import GeneratePassword from './pages/GeneratePassword';
 import SavedPasswords from './pages/SavedPassword';
+import TwoFactorAuth from './pages/TwoFactorAuth';
 import RequireAuth from './components/RequireAuth';
 import Navbar from './components/Navbar';
 
 function App() {
   return (
     <Router>
-      <Navbar /> {/* Siempre visible */}
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/verify-2fa" element={<TwoFactorAuth />} />
         <Route
           path="/generate"
           element={

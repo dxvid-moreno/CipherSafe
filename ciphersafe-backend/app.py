@@ -3,13 +3,21 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from cryptography.fernet import Fernet
-from datetime import datetime
+from datetime import datetime, timedelta
 import qrcode
 import io
 import csv
 from fpdf import FPDF
 import base64
 import os
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+
+# Cargar variables de entorno al inicio
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -35,13 +43,23 @@ def load_or_create_key():
 FERNET_KEY = load_or_create_key()
 cipher = Fernet(FERNET_KEY)
 
-# Modelos
+# Configuración de Flask-Mail (usando variables de entorno)
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+
+#Modelos
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     passwords = db.relationship('PasswordEntry', backref='user', lazy=True)
+    twofa_code = db.Column(db.String(6), nullable=True)
+    twofa_code_expires_at = db.Column(db.DateTime, nullable=True)
 
 class PasswordEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,12 +68,62 @@ class PasswordEntry(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-# Rutas
+# --- Funciones Auxiliares para 2FA ---
+def generate_2fa_code():
+    return str(random.randint(100000, 999999))
+
+def send_2fa_email(recipient_email, code):
+    sender_email = app.config['MAIL_DEFAULT_SENDER']
+    sender_password = app.config['MAIL_PASSWORD']
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+    msg['Subject'] = "Tu Código de Verificación CipherSafe"
+
+    body = f"""
+    Hola,
+
+    Tu código de verificación de dos pasos para CipherSafe es:
+
+    {code}
+
+    Este código expirará en 5 minutos. Si no solicitaste este código, puedes ignorar este correo.
+
+    Saludos,
+    Equipo CipherSafe
+    """
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+        print(f"Código 2FA enviado a {recipient_email}")
+        return True
+    except Exception as e:
+        print(f"Error al enviar correo: {e}")
+        return False
+
+#Rutas
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
-    new_user = User(username=data['username'], email=data['email'], password=hashed_password)
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not username or not email or not password:
+        return jsonify({'error': 'Todos los campos son requeridos'}), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'El nombre de usuario ya existe'}), 409
+    if User.query.filter_by(email=email).first():
+        return jsonify({'error': 'El correo electrónico ya está registrado'}), 409
+
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    new_user = User(username=username, email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'Usuario registrado correctamente'}), 201
@@ -63,22 +131,72 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user = User.query.filter_by(username=data['username']).first()
+    username = data.get('username')
+    password = data.get('password')
 
-    if not user or not bcrypt.check_password_hash(user.password, data['password']):
+    user = User.query.filter_by(username=username).first()
+
+    if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({'error': 'Credenciales inválidas'}), 401
 
-    return jsonify({
-        'message': 'Inicio de sesión exitoso',
-        'user_id': user.id,
-        'token': 'dummy-token'
-    }), 200
+    # Generar y enviar código 2FA
+    code = generate_2fa_code()
+    user.twofa_code = code
+    user.twofa_code_expires_at = datetime.utcnow() + timedelta(minutes=5) # Código válido por 5 minutos
+    db.session.commit()
+
+    if send_2fa_email(user.email, code):
+        return jsonify({
+            'message': 'Código 2FA enviado a tu correo',
+            'user_id': user.id,
+            'requires_2fa': True
+        }), 200
+    else:
+        return jsonify({'error': 'Error al enviar el código 2FA. Intenta de nuevo más tarde.'}), 500
+
+
+@app.route('/verify-2fa', methods=['POST'])
+def verify_2fa():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    code = data.get('code')
+
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    # Verificar el código y la expiración
+    if user.twofa_code and user.twofa_code == code and \
+       user.twofa_code_expires_at and datetime.utcnow() < user.twofa_code_expires_at:
+        # Limpiar el código después de usarlo
+        user.twofa_code = None
+        user.twofa_code_expires_at = None
+        db.session.commit()
+        return jsonify({
+            'message': 'Verificación 2FA exitosa',
+            'user_id': user.id,
+            'token': 'dummy-token' # Puedes generar un token JWT real aquí si lo deseas
+        }), 200
+    else:
+        return jsonify({'error': 'Código 2FA inválido o expirado'}), 401
 
 @app.route('/save-password', methods=['POST'])
 def save_password():
     data = request.get_json()
-    encrypted_pw = cipher.encrypt(data['password'].encode()).decode()
-    entry = PasswordEntry(tag=data.get('tag', ''), value=encrypted_pw, user_id=data['user_id'])
+    user_id = data.get('user_id')
+    password_value = data.get('password')
+    tag = data.get('tag', '')
+
+    if not user_id or not password_value:
+        return jsonify({'error': 'Usuario y contraseña son requeridos'}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    encrypted_pw = cipher.encrypt(password_value.encode()).decode()
+    entry = PasswordEntry(tag=tag, value=encrypted_pw, user_id=user_id)
     db.session.add(entry)
     db.session.commit()
     return jsonify({'message': 'Contraseña guardada exitosamente'}), 201
@@ -166,7 +284,7 @@ def export(user_id, format):
             pdf.ln()
 
         out = io.BytesIO()
-        out.write(pdf.output(dest='S').encode('latin1'))
+        out.write(pdf.output(dest='S'))
         out.seek(0)
         return send_file(out, download_name="passwords.pdf", as_attachment=True)
 
@@ -184,8 +302,9 @@ def delete_password(password_id):
 
 # Inicializa base de datos si no existe
 with app.app_context():
+    # Eliminar las tablas existentes si ya existen (Solo para desarrollo)
+    # db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
-
