@@ -60,6 +60,7 @@ class User(db.Model):
     passwords = db.relationship('PasswordEntry', backref='user', lazy=True)
     twofa_code = db.Column(db.String(6), nullable=True)
     twofa_code_expires_at = db.Column(db.DateTime, nullable=True)
+    reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade="all, delete-orphan")
 
 class PasswordEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -68,31 +69,25 @@ class PasswordEntry(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-# --- Funciones Auxiliares para 2FA ---
-def generate_2fa_code():
-    return str(random.randint(100000, 999999))
+class PasswordResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(6), unique=True, nullable=False) # Código de 6 dígitos
+    expires_at = db.Column(db.DateTime, nullable=False)
 
-def send_2fa_email(recipient_email, code):
+#Funciones Auxiliares para Correo
+def generate_code(length=6):
+    return ''.join(random.choices('0123456789', k=length))
+
+def send_email(recipient_email, subject, body):
     sender_email = app.config['MAIL_DEFAULT_SENDER']
     sender_password = app.config['MAIL_PASSWORD']
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
-    msg['Subject'] = "Tu Código de Verificación CipherSafe"
+    msg['Subject'] = subject
 
-    body = f"""
-    Hola,
-
-    Tu código de verificación de dos pasos para CipherSafe es:
-
-    {code}
-
-    Este código expirará en 5 minutos. Si no solicitaste este código, puedes ignorar este correo.
-
-    Saludos,
-    Equipo CipherSafe
-    """
     msg.attach(MIMEText(body, 'plain'))
 
     try:
@@ -100,10 +95,10 @@ def send_2fa_email(recipient_email, code):
             server.starttls()
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
-        print(f"Código 2FA enviado a {recipient_email}")
+        print(f"Correo enviado a {recipient_email} con asunto: {subject}")
         return True
     except Exception as e:
-        print(f"Error al enviar correo: {e}")
+        print(f"Error al enviar correo a {recipient_email}: {e}")
         return False
 
 #Rutas
@@ -140,12 +135,25 @@ def login():
         return jsonify({'error': 'Credenciales inválidas'}), 401
 
     # Generar y enviar código 2FA
-    code = generate_2fa_code()
+    code = generate_code()
     user.twofa_code = code
     user.twofa_code_expires_at = datetime.utcnow() + timedelta(minutes=5) # Código válido por 5 minutos
     db.session.commit()
 
-    if send_2fa_email(user.email, code):
+    subject = "Tu Código de Verificación CipherSafe"
+    body = f"""
+    Hola,
+
+    Tu código de verificación de dos pasos para CipherSafe es:
+
+    {code}
+
+    Este código expirará en 5 minutos. Si no solicitaste este código, puedes ignorar este correo.
+
+    Saludos,
+    Equipo CipherSafe
+    """
+    if send_email(user.email, subject, body):
         return jsonify({
             'message': 'Código 2FA enviado a tu correo',
             'user_id': user.id,
@@ -180,6 +188,71 @@ def verify_2fa():
         }), 200
     else:
         return jsonify({'error': 'Código 2FA inválido o expirado'}), 401
+
+@app.route('/forgot-password', methods=['POST'])
+def forgot_password_request():
+    data = request.get_json()
+    email = data.get('email')
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'message': 'Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.'}), 200
+
+    # Limpiar tokens anteriores para este usuario
+    PasswordResetToken.query.filter_by(user_id=user.id).delete()
+    db.session.commit()
+
+    reset_code = generate_code()
+    expires_at = datetime.utcnow() + timedelta(minutes=15) # Token válido por 15 minutos
+    new_token = PasswordResetToken(user_id=user.id, token=reset_code, expires_at=expires_at)
+    db.session.add(new_token)
+    db.session.commit()
+
+    subject = "Restablecimiento de Contraseña CipherSafe"
+    body = f"""
+    Hola {user.username},
+
+    Hemos recibido una solicitud para restablecer la contraseña de tu cuenta CipherSafe.
+    Tu código de restablecimiento es:
+
+    {reset_code}
+
+    Este código expirará en 15 minutos. Si no solicitaste este restablecimiento, puedes ignorar este correo.
+
+    Saludos,
+    Equipo CipherSafe
+    """
+    if send_email(user.email, subject, body):
+        return jsonify({'message': 'Se ha enviado un código de restablecimiento a tu correo electrónico.', 'email': email}), 200
+    else:
+        return jsonify({'error': 'Error al enviar el correo de restablecimiento. Intenta de nuevo más tarde.'}), 500
+
+
+@app.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    email = data.get('email')
+    code = data.get('code')
+    new_password = data.get('new_password')
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado.'}), 404
+
+    # Buscar el token de restablecimiento más reciente y válido
+    reset_token = PasswordResetToken.query.filter_by(user_id=user.id, token=code) \
+        .filter(PasswordResetToken.expires_at > datetime.utcnow()) \
+        .first()
+
+    if not reset_token:
+        return jsonify({'error': 'Código de restablecimiento inválido o expirado.'}), 401
+
+    user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    db.session.delete(reset_token)
+    db.session.commit()
+
+    return jsonify({'message': 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.'}), 200
+
 
 @app.route('/save-password', methods=['POST'])
 def save_password():
@@ -302,8 +375,6 @@ def delete_password(password_id):
 
 # Inicializa base de datos si no existe
 with app.app_context():
-    # Eliminar las tablas existentes si ya existen (Solo para desarrollo)
-    # db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':

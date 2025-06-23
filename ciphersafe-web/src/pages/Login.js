@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -43,6 +43,9 @@ export default function Login() {
           <button className="btn btn-success w-100" type="submit">Ingresar</button>
         </form>
         {message && <div className="alert alert-info mt-3">{message}</div>}
+        <div className="text-center mt-3">
+          <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link> {/* Nuevo enlace */}
+        </div>
       </div>
     </div>
   );

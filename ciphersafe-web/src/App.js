@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import GeneratePassword from './pages/GeneratePassword';
 import SavedPasswords from './pages/SavedPassword';
 import TwoFactorAuth from './pages/TwoFactorAuth';
+import ForgotPassword from './pages/ForgotPassword';
 import RequireAuth from './components/RequireAuth';
 import Navbar from './components/Navbar';
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/verify-2fa" element={<TwoFactorAuth />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
           path="/generate"
           element={
