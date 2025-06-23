@@ -15,7 +15,7 @@ export default function SavedPasswords() {
           return;
         }
 
-        const url = `http://localhost:5000/get-passwords/${userId}`;
+        const url = `${process.env.REACT_APP_API_URL}/get-passwords/${userId}`;
         const res = await axios.get(url);
         setPasswords(res.data);
       } catch (err) {
@@ -29,7 +29,7 @@ export default function SavedPasswords() {
 
   const exportPasswords = async (format) => {
     try {
-      const res = await axios.get(`http://localhost:5000/export/${userId}/${format}`, {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/export/${userId}/${format}`, {
         responseType: format === 'pdf' ? 'blob' : 'text'
       });
 
@@ -52,7 +52,7 @@ export default function SavedPasswords() {
   if (!window.confirm("¿Estás seguro de eliminar esta contraseña?")) return;
 
   try {
-    await axios.delete(`http://localhost:5000/delete-password/${id}`);
+    await axios.delete(`${process.env.REACT_APP_API_URL}/delete-password/${id}`);
     setPasswords(passwords.filter(p => p.id !== id));
   } catch (err) {
     console.error("Error al eliminar contraseña:", err);

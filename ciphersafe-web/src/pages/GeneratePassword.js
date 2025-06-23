@@ -35,7 +35,7 @@ export default function GeneratePassword() {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/save-password', {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/save-password`, {
         user_id: parseInt(user_id),
         password,
         tag
