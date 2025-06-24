@@ -20,6 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/verify-2fa" element={<TwoFactorAuth />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* <Route path="/Support" element={<Support />} /> */}
         <Route
           path="/generate"
           element={
