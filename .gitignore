@@ -5,6 +5,12 @@
 /.pnp
 .pnp.js
 
+# Entorno virtual de Python
+venv/
+.venv/
+
+# Dependencias de Node.js
+node_modules/
 # testing
 /coverage
 
