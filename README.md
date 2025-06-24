@@ -26,7 +26,7 @@
 
 3. Instalar las dependencias de python necesarias en este proyecto
     ```
-    pip install -r requeriments.txt
+    pip install -r requirements.txt
     ```
 
 4. Instalar las dependencias del package.json
@@ -42,7 +42,7 @@
 
 6. Ejecutar el archivo App.js para eso debemos estar en la carpeta ciphersafe-frontend
     ```
-    cd ../ciphersafe-frontend
+    cd ciphersafe-web/src
     npm start App.js
     ```
     

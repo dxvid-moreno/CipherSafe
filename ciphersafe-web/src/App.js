@@ -7,8 +7,11 @@ import GeneratePassword from './pages/GeneratePassword';
 import SavedPasswords from './pages/SavedPassword';
 import TwoFactorAuth from './pages/TwoFactorAuth';
 import ForgotPassword from './pages/ForgotPassword';
+import Support from './pages/Support';
+
 import RequireAuth from './components/RequireAuth';
 import Navbar from './components/Navbar';
+
 
 function App() {
   return (
@@ -20,7 +23,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/verify-2fa" element={<TwoFactorAuth />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* <Route path="/Support" element={<Support />} /> */}
+        { <Route path="/support" element={<Support />} /> }
         <Route
           path="/generate"
           element={
