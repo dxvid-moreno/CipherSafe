@@ -373,6 +373,30 @@ def delete_password(password_id):
     db.session.commit()
     return jsonify({'message': 'Contraseña eliminada correctamente'}), 200
 
+@app.route('/update-password/<int:password_id>', methods=['PUT'])
+def update_password(password_id):
+    data = request.get_json()
+    new_tag = data.get('tag')
+    new_password_value = data.get('password')
+
+    entry = PasswordEntry.query.get(password_id)
+    if not entry:
+        return jsonify({'error': 'Contraseña no encontrada'}), 404
+
+    # Actualizar la etiqueta si se proporciona
+    if new_tag is not None:
+        entry.tag = new_tag
+
+    # Actualizar la contraseña si se proporciona
+    if new_password_value:
+        encrypted_pw = cipher.encrypt(new_password_value.encode()).decode()
+        entry.value = encrypted_pw
+    
+    db.session.commit()
+    return jsonify({'message': 'Contraseña actualizada exitosamente'}), 200
+
+
+
 # Inicializa base de datos si no existe
 with app.app_context():
     db.create_all()
