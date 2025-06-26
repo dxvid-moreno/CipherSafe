@@ -20,13 +20,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+# Cors es para manejar el backen en varios dispositivos
 CORS(app)
 
 # Configuración de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Instanciar DB
 db = SQLAlchemy(app)
+# Funcionalidad para encriptar contraseñas
 bcrypt = Bcrypt(app)
 
 # Carga o crea la clave Fernet y guarda en 'secret.key'
@@ -51,7 +54,7 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
-#Modelos
+#Modelos de las tablas de la base da datos
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
