@@ -38,7 +38,7 @@ export default function Home() {
 
           <div className="col-md-6 text-center mt-4 mt-md-0">
             <img
-              src="https://cdn-icons-png.flaticon.com/512/2930/2930409.png"
+              src="https://cdn-icons-png.flaticon.com/512/747/747305.png"
               alt="seguridad"
               className="img-fluid"
               style={{ maxWidth: '300px' }}
