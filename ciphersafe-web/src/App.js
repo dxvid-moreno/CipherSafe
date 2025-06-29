@@ -8,10 +8,10 @@ import SavedPasswords from './pages/SavedPassword';
 import TwoFactorAuth from './pages/TwoFactorAuth';
 import ForgotPassword from './pages/ForgotPassword';
 import Support from './pages/Support';
-
+import PrivacyPolitics from "./pages/PrivacyPolitics";
+import DataPolitics from "./pages/DataPolitics";
 import RequireAuth from './components/RequireAuth';
 import Navbar from './components/Navbar';
-
 
 function App() {
   return (
@@ -23,7 +23,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/verify-2fa" element={<TwoFactorAuth />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        { <Route path="/support" element={<Support />} /> }
+        <Route path="/support" element={<Support />} />
+        <Route path="/PrivacyPolitics" element={<PrivacyPolitics />} />
+        <Route path="/DataPolitics" element={<DataPolitics />} />
         <Route
           path="/generate"
           element={
