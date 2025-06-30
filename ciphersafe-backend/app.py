@@ -13,6 +13,7 @@ import os
 import random
 import string
 import smtplib
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -56,6 +57,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
 #Modelos de las tablas de la base da datos
+# Usuario
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -66,19 +68,28 @@ class User(db.Model):
     twofa_code_expires_at = db.Column(db.DateTime, nullable=True)
     reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade="all, delete-orphan")
     two_factor_enabled = db.Column(db.Boolean, default=True)
-
+    login_history = db.relationship('LoginHistory', backref='user', lazy=True)
+# Entrada de contraseña
 class PasswordEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tag = db.Column(db.String(100))
     value = db.Column(db.String(300), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
+# Token de restablecimiento de contraseña
 class PasswordResetToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     token = db.Column(db.String(6), unique=True, nullable=False) # Código de 6 dígitos
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+# Registro de inicio de sesión
+class LoginHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    ip_address = db.Column(db.String(100), nullable=True)
+    location = db.Column(db.String(255), nullable=True)
+
 
 #Funciones Auxiliares para Correo
 def generate_code(length=6):
@@ -105,6 +116,18 @@ def send_email(recipient_email, subject, body):
     except Exception as e:
         print(f"Error al enviar correo a {recipient_email}: {e}")
         return False
+# Función para obtener la ubicación a partir de la dirección IP
+def get_location_from_ip(ip):
+    try:
+        if ip == "127.0.0.1":
+            return "Localhost"
+        response = requests.get(f"https://ipapi.co/{ip}/json/")
+        if response.status_code == 200:
+            data = response.json()
+            return f"{data.get('city', '')}, {data.get('region', '')}, {data.get('country_name', '')}"
+    except Exception as e:
+        print("Error obteniendo ubicación:", e)
+    return "Ubicación desconocida"
 
 #Rutas
 @app.route('/register', methods=['POST'])
@@ -138,6 +161,14 @@ def login():
 
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({'error': 'Credenciales inválidas'}), 401
+
+    # Obtener ubicación usando la API
+    ip_address = request.remote_addr or '127.0.0.1'
+    location = get_location_from_ip(ip_address)
+    # Registrar el inicio de sesión
+    log = LoginHistory(user_id=user.id, ip_address=ip_address, location=location)
+    db.session.add(log)
+    db.session.commit()
 
     if user.two_factor_enabled:
         # Generar y enviar código 2FA
@@ -489,6 +520,19 @@ def update_password(password_id):
     
     db.session.commit()
     return jsonify({'message': 'Contraseña actualizada exitosamente'}), 200
+
+# Ruta para obtener los registros de inicio de sesión de un usuario
+@app.route('/login-logs/<int:user_id>', methods=['GET'])
+def get_login_logs(user_id):
+    logs = LoginHistory.query.filter_by(user_id=user_id).order_by(LoginHistory.timestamp.desc()).all()
+    result = []
+    for log in logs:
+        result.append({
+            'timestamp': log.timestamp.strftime('%Y-%m-%d %H:%M'),
+            'ip': log.ip_address,
+            'location': log.location
+        })
+    return jsonify(result)
 
 
 

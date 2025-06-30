@@ -6,6 +6,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 export default function Options() {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logs, setLogs] = useState([]);
   const [code, setCode] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -22,6 +24,7 @@ export default function Options() {
       .catch(() => setTwoFAEnabled(false));
   }, [userId]);
 
+  // Manejar el cambio del estado de 2FA
   const handleToggle2FA = () => {
     axios.post(`${process.env.REACT_APP_API_URL}/toggle-2fa`, {
       user_id: userId,
@@ -31,7 +34,7 @@ export default function Options() {
       .catch(() => alert('Error al cambiar el estado de 2FA'));
   };
 
-
+  // Manejar el envío del código de cambio de contraseña
   const handleChangePassword = async () => {
     setMessage('');
     try {
@@ -41,7 +44,7 @@ export default function Options() {
       setMessage('Error al enviar el código');
     }
   };
-
+  // Manejar la verificación del código ingresado
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     try {
@@ -52,7 +55,7 @@ export default function Options() {
       setMessage('Código inválido o expirado');
     }
   };
-
+  // Manejar el guardado de la nueva contraseña
   const handleSavePassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -74,6 +77,16 @@ export default function Options() {
       setMessage('Error al cambiar la contraseña');
     }
   };
+// Manejar la obtención de los registros de acceso
+const fetchLoginLogs = async () => {
+  try {
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/login-logs/${userId}`);
+    setLogs(res.data);
+    setShowLogsModal(true);
+  } catch (err) {
+    setMessage('Error al obtener los registros de inicio de sesión.');
+  }
+};
 
   return (
     <div className="container py-5">
@@ -104,6 +117,15 @@ export default function Options() {
               onChange={handleToggle2FA}
             />
           </div>
+        </li>
+        <li className="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Historial de inicios de sesión</strong>
+            <div className="text-muted small">Ver registros de accesos recientes</div>
+          </div>
+          <button className="btn btn-outline-secondary" onClick={fetchLoginLogs}>
+            Ver
+          </button>
         </li>
       </ul>
 
@@ -197,6 +219,49 @@ export default function Options() {
           </div>
         </div>
       )}
+      {/* Modal de registros de acceso */}
+      {showLogsModal && (
+      <div className="modal fade show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal-dialog modal-lg modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Historial de Inicios de Sesión</h5>
+              <button type="button" className="btn-close" onClick={() => setShowLogsModal(false)}></button>
+            </div>
+            <div className="modal-body">
+              {logs.length === 0 ? (
+                <p className="text-muted text-center">No hay registros disponibles.</p>
+              ) : (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Fecha y hora</th>
+                      <th>IP</th>
+                      <th>Ubicación</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log, index) => (
+                      <tr key={index}>
+                        <td>{log.timestamp}</td>
+                        <td>{log.ip}</td>
+                        <td>{log.location}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowLogsModal(false)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     </div>
   );
 }
