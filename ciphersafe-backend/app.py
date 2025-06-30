@@ -65,6 +65,7 @@ class User(db.Model):
     twofa_code = db.Column(db.String(6), nullable=True)
     twofa_code_expires_at = db.Column(db.DateTime, nullable=True)
     reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade="all, delete-orphan")
+    two_factor_enabled = db.Column(db.Boolean, default=True)
 
 class PasswordEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -138,33 +139,36 @@ def login():
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({'error': 'Credenciales inválidas'}), 401
 
-    # Generar y enviar código 2FA
-    code = generate_code()
-    user.twofa_code = code
-    user.twofa_code_expires_at = datetime.utcnow() + timedelta(minutes=5) # Código válido por 5 minutos
-    db.session.commit()
+    if user.two_factor_enabled:
+        # Generar y enviar código 2FA
+        code = generate_code()
+        user.twofa_code = code
+        user.twofa_code_expires_at = datetime.utcnow() + timedelta(minutes=5)
+        db.session.commit()
 
-    subject = "Tu Código de Verificación CipherSafe"
-    body = f"""
-    Hola,
+        subject = "Tu Código de Verificación CipherSafe"
+        body = f"""
+        Hola,
 
-    Tu código de verificación de dos pasos para CipherSafe es:
+        Tu código de verificación para acceder a CipherSafe es: {code}
+        Este código expirará en 5 minutos.
 
-    {code}
+        Saludos,
+        Equipo CipherSafe
+        """
+        send_email(user.email, subject, body)
 
-    Este código expirará en 5 minutos. Si no solicitaste este código, puedes ignorar este correo.
-
-    Saludos,
-    Equipo CipherSafe
-    """
-    if send_email(user.email, subject, body):
         return jsonify({
-            'message': 'Código 2FA enviado a tu correo',
+            'message': '2FA requerido',
             'user_id': user.id,
             'requires_2fa': True
         }), 200
     else:
-        return jsonify({'error': 'Error al enviar el código 2FA. Intenta de nuevo más tarde.'}), 500
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.id,
+            'requires_2fa': False
+        }), 200
 
 # Ruta para recuperacion de contraseña
 @app.route('/verify-2fa', methods=['POST'])
@@ -358,6 +362,28 @@ def change_password_final_step():
     user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
     db.session.commit()
     return jsonify({'message': 'Contraseña cambiada exitosamente'}), 200
+
+# Ruta para activar/desactivar 2FA
+@app.route('/toggle-2fa', methods=['POST'])
+def toggle_2fa():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    enabled = data.get('enabled', False)
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    user.two_factor_enabled = enabled
+    db.session.commit()
+    return jsonify({'message': '2FA actualizado correctamente'})
+
+@app.route('/get-2fa/<int:user_id>', methods=['GET'])
+def get_2fa_status(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    return jsonify({'enabled': user.two_factor_enabled})
 
 # Ruta para obtener el código QR de una contraseña
 @app.route('/get-qr/<int:password_id>', methods=['GET'])

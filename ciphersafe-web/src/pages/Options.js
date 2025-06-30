@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// src/pages/Options.js
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -9,37 +10,51 @@ export default function Options() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [message, setMessage] = useState('');
   const userId = localStorage.getItem('user_id');
 
-  // Abrir modal de código y solicitar código
+  // Cargar el estado actual de 2FA al cargar la vista
+
+  useEffect(() => {
+    axios.get(`${process.env.REACT_APP_API_URL}/get-2fa/${userId}`)
+      .then(res => setTwoFAEnabled(res.data.enabled))
+      .catch(() => setTwoFAEnabled(false));
+  }, [userId]);
+
+  const handleToggle2FA = () => {
+    axios.post(`${process.env.REACT_APP_API_URL}/toggle-2fa`, {
+      user_id: userId,
+      enabled: !twoFAEnabled
+    })
+      .then(() => setTwoFAEnabled(prev => !prev))
+      .catch(() => alert('Error al cambiar el estado de 2FA'));
+  };
+
+
   const handleChangePassword = async () => {
     setMessage('');
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/change-password-send-code`, { user_id: userId });
       setShowCodeModal(true);
-    } catch (err) {
+    } catch {
       setMessage('Error al enviar el código');
     }
   };
 
-  // Verificar código
   const handleVerifyCode = async (e) => {
     e.preventDefault();
-    setMessage('');
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/change-password-verify-code`, { user_id: userId, code });
       setShowCodeModal(false);
       setShowPasswordModal(true);
-    } catch (err) {
+    } catch {
       setMessage('Código inválido o expirado');
     }
   };
 
-  // Guardar nueva contraseña
   const handleSavePassword = async (e) => {
     e.preventDefault();
-    setMessage('');
     if (newPassword !== confirmPassword) {
       setMessage('Las contraseñas no coinciden');
       return;
@@ -55,7 +70,7 @@ export default function Options() {
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
+    } catch {
       setMessage('Error al cambiar la contraseña');
     }
   };
@@ -64,6 +79,7 @@ export default function Options() {
     <div className="container py-5">
       <h2 className="mb-4">Opciones de Seguridad</h2>
       <ul className="list-group shadow-sm mb-4">
+
         <li className="list-group-item d-flex justify-content-between align-items-center">
           <div>
             <strong>Cambiar contraseña</strong>
@@ -73,8 +89,24 @@ export default function Options() {
             Cambiar
           </button>
         </li>
-        {/* Aquí puedes agregar más opciones en el futuro */}
+
+        <li className="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Autenticación de dos pasos (2FA)</strong>
+            <div className="text-muted small">Protección extra al iniciar sesión</div>
+          </div>
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="twoFA"
+              checked={twoFAEnabled}
+              onChange={handleToggle2FA}
+            />
+          </div>
+        </li>
       </ul>
+
       {message && (
         <div className={`alert mt-3 ${message.toLowerCase().includes('error') ? 'alert-danger' : 'alert-info'}`}>
           {message}
