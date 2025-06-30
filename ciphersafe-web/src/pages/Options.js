@@ -1,0 +1,170 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+export default function Options() {
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [code, setCode] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const userId = localStorage.getItem('user_id');
+
+  // Abrir modal de código y solicitar código
+  const handleChangePassword = async () => {
+    setMessage('');
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/change-password-send-code`, { user_id: userId });
+      setShowCodeModal(true);
+    } catch (err) {
+      setMessage('Error al enviar el código');
+    }
+  };
+
+  // Verificar código
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/change-password-verify-code`, { user_id: userId, code });
+      setShowCodeModal(false);
+      setShowPasswordModal(true);
+    } catch (err) {
+      setMessage('Código inválido o expirado');
+    }
+  };
+
+  // Guardar nueva contraseña
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    if (newPassword !== confirmPassword) {
+      setMessage('Las contraseñas no coinciden');
+      return;
+    }
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/change-password-final-step`, {
+        user_id: userId,
+        old_password: oldPassword,
+        new_password: newPassword
+      });
+      setShowPasswordModal(false);
+      setMessage('Contraseña cambiada exitosamente');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setMessage('Error al cambiar la contraseña');
+    }
+  };
+
+  return (
+    <div className="container py-5">
+      <h2 className="mb-4">Opciones de Seguridad</h2>
+      <ul className="list-group shadow-sm mb-4">
+        <li className="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Cambiar contraseña</strong>
+            <div className="text-muted small">Actualiza tu contraseña de acceso</div>
+          </div>
+          <button className="btn btn-outline-primary" onClick={handleChangePassword}>
+            Cambiar
+          </button>
+        </li>
+        {/* Aquí puedes agregar más opciones en el futuro */}
+      </ul>
+      {message && (
+        <div className={`alert mt-3 ${message.toLowerCase().includes('error') ? 'alert-danger' : 'alert-info'}`}>
+          {message}
+        </div>
+      )}
+
+      {/* Modal de código de verificación */}
+      {showCodeModal && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <form onSubmit={handleVerifyCode}>
+                <div className="modal-header">
+                  <h5 className="modal-title">Verificación de Código</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowCodeModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <p>Ingresa el código de 6 dígitos que enviamos a tu correo.</p>
+                  <input
+                    className="form-control"
+                    value={code}
+                    onChange={e => setCode(e.target.value)}
+                    maxLength={6}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCodeModal(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Verificar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de cambio de contraseña */}
+      {showPasswordModal && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <form onSubmit={handleSavePassword}>
+                <div className="modal-header">
+                  <h5 className="modal-title">Cambiar Contraseña</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowPasswordModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <input
+                    className="form-control mb-2"
+                    type="password"
+                    placeholder="Contraseña actual"
+                    value={oldPassword}
+                    onChange={e => setOldPassword(e.target.value)}
+                    required
+                  />
+                  <input
+                    className="form-control mb-2"
+                    type="password"
+                    placeholder="Nueva contraseña"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                  />
+                  <input
+                    className="form-control mb-2"
+                    type="password"
+                    placeholder="Confirmar nueva contraseña"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-success">
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

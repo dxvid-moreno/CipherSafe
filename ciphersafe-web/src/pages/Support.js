@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import PoliticaPrivacidad from "./PrivacyPolitics";
-import PoliticaDatos from "./DataPolitics";
 
 export default function Support() {
   const [section, setSection] = useState("tutorials");

@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from cryptography.fernet import Fernet
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import qrcode
 import io
 import csv
@@ -11,6 +11,7 @@ from fpdf import FPDF
 import base64
 import os
 import random
+import string
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -76,7 +77,7 @@ class PasswordResetToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     token = db.Column(db.String(6), unique=True, nullable=False) # Código de 6 dígitos
-    expires_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
 
 #Funciones Auxiliares para Correo
 def generate_code(length=6):
@@ -165,7 +166,7 @@ def login():
     else:
         return jsonify({'error': 'Error al enviar el código 2FA. Intenta de nuevo más tarde.'}), 500
 
-
+# Ruta para recuperacion de contraseña
 @app.route('/verify-2fa', methods=['POST'])
 def verify_2fa():
     data = request.get_json()
@@ -294,6 +295,71 @@ def get_passwords(user_id):
         })
     return jsonify(results), 200
 
+
+
+# Ruta para cambiar la contraseña
+@app.route('/change-password-send-code', methods=['POST'])
+def change_password_send_code():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    code = generate_code()
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+    # Eliminar códigos previos
+    PasswordResetToken.query.filter_by(user_id=user.id).delete()
+
+    token = PasswordResetToken(user_id=user.id, token=code, expires_at=expires_at)
+    db.session.add(token)
+    db.session.commit()
+
+    subject = "Código de verificación para cambiar contraseña"
+    body = f"Tu código es: {code}. Expira en 10 minutos."
+    if send_email(user.email, subject, body):
+        return jsonify({'message': 'Código enviado correctamente'}), 200
+    else:
+        return jsonify({'error': 'Error al enviar el código'}), 500
+
+@app.route('/change-password-verify-code', methods=['POST'])
+def change_password_verify_code():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    code = data.get('code')
+
+    token_entry = PasswordResetToken.query.filter_by(user_id=user_id, token=code).first()
+    if not token_entry:
+        return jsonify({'error': 'Código inválido'}), 400
+    if token_entry.expires_at < datetime.utcnow():
+        db.session.delete(token_entry)
+        db.session.commit()
+        return jsonify({'error': 'Código expirado'}), 400
+
+    db.session.delete(token_entry)
+    db.session.commit()
+    return jsonify({'message': 'Código verificado correctamente'}), 200
+
+@app.route('/change-password-final-step', methods=['POST'])
+def change_password_final_step():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    if not bcrypt.check_password_hash(user.password, old_password):
+        return jsonify({'error': 'La contraseña actual es incorrecta'}), 400
+
+    user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    db.session.commit()
+    return jsonify({'message': 'Contraseña cambiada exitosamente'}), 200
+
+# Ruta para obtener el código QR de una contraseña
 @app.route('/get-qr/<int:password_id>', methods=['GET'])
 def get_qr(password_id):
     entry = PasswordEntry.query.get(password_id)

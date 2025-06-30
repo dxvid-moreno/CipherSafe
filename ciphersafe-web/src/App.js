@@ -12,6 +12,7 @@ import PrivacyPolitics from "./pages/PrivacyPolitics";
 import DataPolitics from "./pages/DataPolitics";
 import RequireAuth from './components/RequireAuth';
 import Navbar from './components/Navbar';
+import Options from './pages/Options';
 
 function App() {
   return (
@@ -26,6 +27,14 @@ function App() {
         <Route path="/support" element={<Support />} />
         <Route path="/PrivacyPolitics" element={<PrivacyPolitics />} />
         <Route path="/DataPolitics" element={<DataPolitics />} />
+        <Route
+          path="/options"
+          element={
+            <RequireAuth>
+              <Options />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/generate"
           element={

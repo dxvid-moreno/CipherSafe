@@ -12,12 +12,11 @@ export default function Navbar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
       <Link className="navbar-brand" to="/">CipherSafe</Link>
-
       <div className="collapse navbar-collapse">
         <ul className="navbar-nav ms-auto">
           {token ? (
             <>
-            <li className="nav-item">
+              <li className="nav-item">
                 <Link className="nav-link" to="/support">Soporte</Link>
               </li>
               <li className="nav-item">
@@ -25,6 +24,9 @@ export default function Navbar() {
               </li>
               <li className="nav-item">
                 <Link className="nav-link" to="/saved">Mis Contraseñas</Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/options">Opciones</Link>
               </li>
               <li className="nav-item">
                 <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
