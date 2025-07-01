@@ -113,6 +113,24 @@ export default function SavedPasswords() {
     setEditMessage('');
   };
 
+  const handleToggleVisibility = async (pw) => {
+    setVisiblePasswords((prev) => ({
+      ...prev,
+      [pw.id]: !prev[pw.id],
+    }));
+    // Solo registrar si se va a mostrar (no ocultar)
+    if (!visiblePasswords[pw.id]) {
+      try {
+        await axios.post(`${process.env.REACT_APP_API_URL}/log-password-view`, {
+          user_id: userId,
+          password_id: pw.id,
+        });
+      } catch (err) {
+        // No mostrar error al usuario, solo log
+        console.error("Error registrando vista de contraseña:", err);
+      }
+    }
+  };
 
   return (
     <div className="container mt-5">
@@ -143,12 +161,7 @@ export default function SavedPasswords() {
             />
             <button
               className="btn btn-outline-secondary btn-sm"
-              onClick={() =>
-                setVisiblePasswords((prev) => ({
-                  ...prev,
-                  [pw.id]: !prev[pw.id],
-                }))
-              }
+              onClick={() => handleToggleVisibility(pw)}
               title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
               <i className={`fas ${visible ? 'fa-eye-slash' : 'fa-eye'}`}></i>

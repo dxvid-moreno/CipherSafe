@@ -91,6 +91,13 @@ class LoginHistory(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     ip_address = db.Column(db.String(100), nullable=True)
     location = db.Column(db.String(255), nullable=True)
+# Registro de vistas de contraseña
+class PasswordViewLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    password_id = db.Column(db.Integer, db.ForeignKey('password_entry.id'), nullable=False)
+    tag = db.Column(db.String(100))
+    viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 #Funciones Auxiliares para Correo
@@ -559,6 +566,38 @@ def get_login_logs(user_id):
             'location': log.location
         })
     return jsonify(result)
+
+# Ruta para registrar vista de contraseña
+@app.route('/log-password-view', methods=['POST'])
+def log_password_view():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    password_id = data.get('password_id')
+
+    entry = PasswordEntry.query.get(password_id)
+    if not entry:
+        return jsonify({'error': 'Contraseña no encontrada'}), 404
+
+    log = PasswordViewLog(
+        user_id=user_id,
+        password_id=password_id,
+        tag=entry.tag,
+        viewed_at=datetime.utcnow()
+    )
+    db.session.add(log)
+    db.session.commit()
+    return jsonify({'message': 'Vista registrada'}), 201
+
+@app.route('/password-view-logs/<int:user_id>', methods=['GET'])
+def get_password_view_logs(user_id):
+    logs = PasswordViewLog.query.filter_by(user_id=user_id).order_by(PasswordViewLog.viewed_at.desc()).all()
+    result = []
+    for log in logs:
+        result.append({
+            'tag': log.tag,
+            'viewed_at': log.viewed_at.strftime('%Y-%m-%d %H:%M')
+        })
+    return jsonify(result), 200
 
 
 

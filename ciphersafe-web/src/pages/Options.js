@@ -1,4 +1,3 @@
-// src/pages/Options.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,7 +6,9 @@ export default function Options() {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLogsModal, setShowLogsModal] = useState(false);
+  const [showViewLogsModal, setShowViewLogsModal] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [viewLogs, setViewLogs] = useState([]);
   const [code, setCode] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -77,16 +78,27 @@ export default function Options() {
       setMessage('Error al cambiar la contraseña');
     }
   };
-// Manejar la obtención de los registros de acceso
-const fetchLoginLogs = async () => {
-  try {
-    const res = await axios.get(`${process.env.REACT_APP_API_URL}/login-logs/${userId}`);
-    setLogs(res.data);
-    setShowLogsModal(true);
-  } catch (err) {
-    setMessage('Error al obtener los registros de inicio de sesión.');
-  }
-};
+  // Manejar la obtención de los registros de acceso
+  const fetchLoginLogs = async () => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/login-logs/${userId}`);
+      setLogs(res.data);
+      setShowLogsModal(true);
+    } catch (err) {
+      setMessage('Error al obtener los registros de inicio de sesión.');
+    }
+  };
+
+  // Obtener logs de visualización de contraseñas
+  const fetchPasswordViewLogs = async () => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/password-view-logs/${userId}`);
+      setViewLogs(res.data);
+      setShowViewLogsModal(true);
+    } catch (err) {
+      setMessage('Error al obtener el historial de visualización de contraseñas.');
+    }
+  };
 
   return (
     <div className="container py-5">
@@ -123,7 +135,16 @@ const fetchLoginLogs = async () => {
             <strong>Historial de inicios de sesión</strong>
             <div className="text-muted small">Ver registros de accesos recientes</div>
           </div>
-          <button className="btn btn-outline-secondary" onClick={fetchLoginLogs}>
+          <button className="btn btn-outline-primary" onClick={fetchLoginLogs}>
+            Ver
+          </button>
+        </li>
+        <li className="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Historial de actividad de contraseñas</strong>
+            <div className="text-muted small">Ver cuándo y qué contraseñas se visualizaron</div>
+          </div>
+          <button className="btn btn-outline-primary" onClick={fetchPasswordViewLogs}>
             Ver
           </button>
         </li>
@@ -261,6 +282,46 @@ const fetchLoginLogs = async () => {
         </div>
       </div>
     )}
+      {/* Modal de registros de visualización de contraseñas */}
+      {showViewLogsModal && (
+  <div className="modal fade show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+    <div className="modal-dialog modal-lg modal-dialog-centered">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Historial de Visualización de Contraseñas</h5>
+          <button type="button" className="btn-close" onClick={() => setShowViewLogsModal(false)}></button>
+        </div>
+        <div className="modal-body">
+          {viewLogs.length === 0 ? (
+            <p className="text-muted text-center">No hay registros disponibles.</p>
+          ) : (
+            <table className="table table-striped">
+              <thead>
+                <tr>
+                  <th>Fecha y hora</th>
+                  <th>Etiqueta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {viewLogs.map((log, index) => (
+                  <tr key={index}>
+                    <td>{log.viewed_at}</td>
+                    <td>{log.tag}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={() => setShowViewLogsModal(false)}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
     </div>
   );
