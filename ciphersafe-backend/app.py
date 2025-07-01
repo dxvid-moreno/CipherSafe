@@ -483,7 +483,7 @@ def export(user_id, format):
             pdf.ln()
 
         out = io.BytesIO()
-        out.write(pdf.output(dest='S'))
+        out.write(pdf.output(dest='S').encode('latin-1'))
         out.seek(0)
         return send_file(out, download_name="passwords.pdf", as_attachment=True)
 

@@ -10,6 +10,7 @@ export default function SavedPasswords() {
   const [newTag, setNewTag] = useState('');
   const [newPasswordValue, setNewPasswordValue] = useState('');
   const [editMessage, setEditMessage] = useState('');
+  const [visiblePasswords, setVisiblePasswords] = useState({});
 
   // Función para obtener las contraseñas
   const fetchPasswords = async () => {
@@ -121,38 +122,62 @@ export default function SavedPasswords() {
       <button className="btn btn-outline-primary me-2" onClick={() => exportPasswords('csv')}>Exportar CSV</button>
       <button className="btn btn-outline-danger" onClick={() => exportPasswords('pdf')}>Exportar PDF</button>
 
-      <ul className="list-group mt-4">
-        {passwords.length === 0 && !error ? (
-          <li className="list-group-item text-center text-muted">No tienes contraseñas guardadas.</li>
-        ) : (
-          passwords.map((pw) => (
-            <li key={pw.id} className="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <strong>{pw.tag || '(sin etiqueta)'}</strong><br />
-                <small>{pw.created_at}</small><br />
-                <span>{pw.password}</span>
-              </div>
-              <div className="d-flex flex-column align-items-end">
-                <QRCodeSVG value={pw.password} size={64} />
-                <div className="mt-2">
-                  <button
-                    className="btn btn-sm btn-info me-2"
-                    onClick={() => handleEditClick(pw)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => deletePassword(pw.id)}
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))
-        )}
-      </ul>
+<ul className="list-group mt-4">
+  {passwords.length === 0 && !error ? (
+    <li className="list-group-item text-center text-muted">No tienes contraseñas guardadas.</li>
+  ) : (
+    passwords.map((pw) => {
+      const visible = !!visiblePasswords[pw.id];
+      return (
+        <li key={pw.id} className="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{pw.tag || '(sin etiqueta)'}</strong><br />
+            <small>{pw.created_at}</small><br />
+            <div className="d-flex align-items-center">
+            <input
+              type={visible ? 'text' : 'password'}
+              readOnly
+              value={pw.password}
+              className="form-control me-2"
+              style={{ width: 'auto' }}
+            />
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              onClick={() =>
+                setVisiblePasswords((prev) => ({
+                  ...prev,
+                  [pw.id]: !prev[pw.id],
+                }))
+              }
+              title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+              <i className={`fas ${visible ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+            </button>
+          </div>
+          </div>
+          <div className="d-flex flex-column align-items-end">
+            <QRCodeSVG value={pw.password} size={64} />
+            <div className="mt-2">
+              <button
+                className="btn btn-sm btn-info me-2"
+                onClick={() => handleEditClick(pw)}
+              >
+                Editar
+              </button>
+              <button
+                className="btn btn-sm btn-danger"
+                onClick={() => deletePassword(pw.id)}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </li>
+      );
+    })
+  )}
+</ul>
+
 
       {editingPassword && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
