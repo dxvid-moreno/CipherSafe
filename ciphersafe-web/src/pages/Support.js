@@ -87,7 +87,9 @@ export default function Support() {
           Enviar
         </button>
         {submissionStatus === "success" && (
-          <div className="text-success mt-2">¡Mensaje enviado correctamente!</div>
+          <div className="text-success mt-2">
+            ¡Mensaje enviado correctamente!
+          </div>
         )}
       </form>
     </div>
@@ -101,6 +103,17 @@ export default function Support() {
             <h4>Tutoriales</h4>
             <p>Guías paso a paso para usar CipherSafe:</p>
             <ul>
+              <li>
+                <p>Qué es ciphersafe?</p>
+                <iframe
+                  width="640"
+                  height="360"
+                  src="https://www.youtube.com/embed/-tq52xQsKFs"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </li>
               <li>
                 <p>Cómo empezar con CipherSafe</p>
                 <iframe
@@ -131,10 +144,10 @@ export default function Support() {
           <div>
             <h4>Políticas</h4>
             <p>
-            Respetamos tu privacidad. Revisa nuestros{" "}
-            <Link to="/PrivacyPolitics">términos y condiciones</Link> y{" "}
-            <Link to="/DataPolitics">políticas de uso de datos</Link>.
-          </p>
+              Respetamos tu privacidad. Revisa nuestros{" "}
+              <Link to="/PrivacyPolitics">términos y condiciones</Link> y{" "}
+              <Link to="/DataPolitics">políticas de uso de datos</Link>.
+            </p>
           </div>
         );
       case "faq":
@@ -166,19 +179,25 @@ export default function Support() {
 
       <div className="mb-4 d-flex flex-wrap gap-2">
         <button
-          className={`btn btn-outline-primary ${section === "tutorials" ? "active" : ""}`}
+          className={`btn btn-outline-primary ${
+            section === "tutorials" ? "active" : ""
+          }`}
           onClick={() => setSection("tutorials")}
         >
           Tutoriales
         </button>
         <button
-          className={`btn btn-outline-primary ${section === "policies" ? "active" : ""}`}
+          className={`btn btn-outline-primary ${
+            section === "policies" ? "active" : ""
+          }`}
           onClick={() => setSection("policies")}
         >
           Políticas
         </button>
         <button
-          className={`btn btn-outline-primary ${section === "faq" ? "active" : ""}`}
+          className={`btn btn-outline-primary ${
+            section === "faq" ? "active" : ""
+          }`}
           onClick={() => {
             setSection("faq");
             setReason("faq");
@@ -187,7 +206,9 @@ export default function Support() {
           FAQ
         </button>
         <button
-          className={`btn btn-outline-primary ${section === "contact" ? "active" : ""}`}
+          className={`btn btn-outline-primary ${
+            section === "contact" ? "active" : ""
+          }`}
           onClick={() => {
             setSection("contact");
             setReason("contact");
@@ -196,7 +217,9 @@ export default function Support() {
           Contactar soporte
         </button>
         <button
-          className={`btn btn-outline-primary ${section === "report" ? "active" : ""}`}
+          className={`btn btn-outline-primary ${
+            section === "report" ? "active" : ""
+          }`}
           onClick={() => {
             setSection("report");
             setReason("report");
