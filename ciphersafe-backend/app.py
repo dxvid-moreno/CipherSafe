@@ -91,7 +91,7 @@ class LoginHistory(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     ip_address = db.Column(db.String(100), nullable=True)
     location = db.Column(db.String(255), nullable=True)
-# Registro de vistas de contraseña
+# Registro de actividad de vistas de contraseñas
 class PasswordViewLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
