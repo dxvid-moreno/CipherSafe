@@ -69,6 +69,8 @@ class User(db.Model):
     reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade="all, delete-orphan")
     two_factor_enabled = db.Column(db.Boolean, default=True)
     login_history = db.relationship('LoginHistory', backref='user', lazy=True)
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    last_failed_login = db.Column(db.DateTime, nullable=True)
 # Entrada de contraseña
 class PasswordEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -160,7 +162,22 @@ def login():
     user = User.query.filter_by(username=username).first()
 
     if not user or not bcrypt.check_password_hash(user.password, password):
+        # Registrar intento fallido
+        if user:
+            user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+            user.last_failed_login = datetime.utcnow()
+            db.session.commit()
         return jsonify({'error': 'Credenciales inválidas'}), 401
+
+    # Si el login es exitoso, revisa si hubo 5 o más intentos fallidos
+    show_warning = False
+    if user.failed_login_attempts and user.failed_login_attempts >= 5:
+        show_warning = True
+
+    # Resetear contador de intentos fallidos
+    user.failed_login_attempts = 0
+    user.last_failed_login = None
+    db.session.commit()
 
     # Obtener ubicación usando la API
     ip_address = request.remote_addr or '127.0.0.1'
@@ -192,13 +209,15 @@ def login():
         return jsonify({
             'message': '2FA requerido',
             'user_id': user.id,
-            'requires_2fa': True
+            'requires_2fa': True,
+            'show_warning': show_warning
         }), 200
     else:
         return jsonify({
             'message': 'Inicio de sesión exitoso',
             'user_id': user.id,
-            'requires_2fa': False
+            'requires_2fa': False,
+            'show_warning': show_warning
         }), 200
 
 # Ruta para recuperacion de contraseña
@@ -219,6 +238,13 @@ def verify_2fa():
         # Limpiar el código después de usarlo
         user.twofa_code = None
         user.twofa_code_expires_at = None
+        db.session.commit()
+        # Revisar si hubo warning
+        show_warning = False
+        if user.failed_login_attempts and user.failed_login_attempts >= 5:
+            show_warning = True
+        user.failed_login_attempts = 0
+        user.last_failed_login = None
         db.session.commit()
         return jsonify({
             'message': 'Verificación 2FA exitosa',

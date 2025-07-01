@@ -1,12 +1,31 @@
+import React, { useEffect } from 'react';
 import { useState, useRef } from 'react';
 import axios from 'axios';
 import { QRCodeCanvas } from 'qrcode.react';
+import Swal from 'sweetalert2';
 
 export default function GeneratePassword() {
   const [password, setPassword] = useState('');
   const [tag, setTag] = useState('');
   const [message, setMessage] = useState('');
   const passwordRef = useRef(null);
+
+  useEffect(() => {
+    // Mostrar advertencia si existe el flag
+    if (localStorage.getItem('show_warning') === 'true') {
+      Swal.fire({
+        icon: 'warning',
+        title: '¡Alerta de Seguridad!',
+        html: 'Se detectaron <b>5 o más intentos fallidos</b> de inicio de sesión en tu cuenta.<br>Te recomendamos <b>cambiar tu contraseña</b> en las opciones de seguridad.',
+        showConfirmButton: false,
+        showCloseButton: true,
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+      });
+      // Elimina el flag para que no vuelva a aparecer hasta el próximo caso
+      localStorage.removeItem('show_warning');
+    }
+  }, []);
 
   const generate = () => {
     const length = 12;

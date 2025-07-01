@@ -36,6 +36,10 @@ export default function TwoFactorAuth() {
         localStorage.setItem('user_id', res.data.user_id);
         localStorage.removeItem('user_id_temp');
         setMessage(res.data.message || 'Verificación exitosa.');
+        // Si hubo warning, lo guardamos en localStorage
+        if (res.data.show_warning) {
+          localStorage.setItem('show_warning', 'true');
+        }
         navigate('/generate');
       }
     } catch (err) {

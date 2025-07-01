@@ -109,29 +109,28 @@ export default function Support() {
                   width="640"
                   height="360"
                   src="https://www.youtube.com/embed/-tq52xQsKFs"
+                  title="Qué es ciphersafe video"
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowfullscreen
                 ></iframe>
               </li>
               <li>
-                <p>Cómo empezar con CipherSafe</p>
                 <iframe
                   width="560"
                   height="315"
                   src="https://www.youtube.com/watch?v=pDCsTIH6uXw&list=RDpDCsTIH6uXw&start_radio=1"
-                  title="Inicio con CipherSafe"
+                  title="Cómo empezar con CipherSafe video"
                   frameBorder="0"
                   allowFullScreen
                 ></iframe>
               </li>
               <li>
-                <p>Gestión de contraseñas seguras</p>
                 <iframe
                   width="560"
                   height="315"
                   src="https://www.youtube.com/watch?v=pDCsTIH6uXw&list=RDpDCsTIH6uXw&start_radio=1"
-                  title="Contraseñas seguras"
+                  title="Gestión de contraseñas seguras video"
                   frameBorder="0"
                   allowFullScreen
                 ></iframe>

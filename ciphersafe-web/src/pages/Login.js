@@ -27,6 +27,10 @@ export default function Login() {
         setMessage(res.data.message);
         navigate('/generate');
       }
+      // Si hubo warning, lo guardamos en localStorage
+      if (res.data.show_warning) {
+        localStorage.setItem('show_warning', 'true');
+      }
     } catch (err) {
       console.error("Error en login:", err);
       setMessage(err.response?.data?.error || 'Error al iniciar sesión');
