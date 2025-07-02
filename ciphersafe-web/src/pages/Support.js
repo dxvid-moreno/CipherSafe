@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 
 export default function Support() {
   const [section, setSection] = useState("tutorials");
@@ -18,6 +17,70 @@ export default function Support() {
       question: "¿Cómo restablezco mi cuenta?",
       answer:
         'Para restablecer tu cuenta, ve a la página de inicio de sesión y haz clic en "Olvidé mi contraseña". Sigue los pasos para verificar tu identidad y establecer una nueva contraseña.',
+    },
+    {
+      question: "¿Qué hago si olvidé mi contraseña maestra?",
+      answer:
+        "Si olvidaste tu contraseña maestra, utiliza la opción de recuperación desde la página de inicio de sesión. Se te pedirá verificar tu identidad mediante el correo electrónico registrado.",
+    },
+    {
+      question: "¿Puedo acceder a mis contraseñas desde otro dispositivo?",
+      answer:
+        "Sí. Solo necesitas iniciar sesión con tu cuenta en otro dispositivo. Recuerda habilitar la autenticación de dos factores para mayor seguridad.",
+    },
+    {
+      question: "¿Cómo funciona la autenticación de dos factores (2FA)?",
+      answer:
+        "La autenticación de dos factores añade una capa extra de seguridad. Debes ingresar un código temporal que recibirás en tu correo o aplicación autenticadora al iniciar sesión.",
+    },
+    {
+      question: "¿Qué tan segura está mi información?",
+      answer:
+        "CipherSafe cifra tus contraseñas usando algoritmos de seguridad avanzados. Solo tú puedes acceder a ellas con tu clave maestra.",
+    },
+    {
+      question: "¿Puedo exportar mis contraseñas?",
+      answer:
+        "Por ahora, la exportación de contraseñas no está disponible por seguridad. Estamos evaluando formas seguras de implementarla en futuras versiones.",
+    },
+    {
+      question: "¿Qué hago si sospecho que alguien intentó acceder a mi cuenta?",
+      answer:
+        "Cambia tu contraseña de inmediato y revisa la sección de alertas de seguridad. Si detectas actividad sospechosa, contáctanos por el formulario de soporte.",
+    },
+    {
+      question: "¿Puedo usar CipherSafe sin conexión a internet?",
+      answer:
+        "No, actualmente necesitas estar conectado a internet para acceder a tus contraseñas, ya que están almacenadas de forma segura en la nube.",
+    },
+    {
+      question: "¿Es necesario registrarse para usar la aplicación?",
+      answer:
+        "Sí, necesitas crear una cuenta para poder guardar y gestionar tus contraseñas de forma segura.",
+    },
+  ];
+
+  const tutorials = [
+    {
+      title: "¿Qué es CipherSafe?",
+      videoUrl: "https://www.youtube.com/embed/-tq52xQsKFs",
+      description: "Una introducción general a la aplicación y su propósito.",
+    },
+    {
+      title: "¿Cómo empezar con CipherSafe?",
+      videoUrl: "https://www.youtube.com/embed/ePHLIkfITdU",
+      description:
+        "Primeros pasos: registro, inicio de sesión y generación de contraseñas.",
+    },
+    {
+      title: "Gestión de contraseñas seguras",
+      videoUrl: "https://www.youtube.com/embed/e7nX_KJRfnE",
+      description: "Cómo guardar, visualizar y organizar tus contraseñas.",
+    },
+    {
+      title: "Gestión de contraseñas seguras",
+      videoUrl: "https://www.youtube.com/embed/Pyw3_q7KF-I",
+      description: "Cómo guardar, visualizar y organizar tus contraseñas.",
     },
   ];
 
@@ -45,6 +108,11 @@ export default function Support() {
     setSubmissionStatus("success");
     setEmail("");
     setMessage("");
+
+      // Ocultar mensaje de éxito después de 10 segundos
+      setTimeout(() => {
+        setSubmissionStatus(null);
+      }, 10000);
   };
 
   const renderUnifiedForm = () => (
@@ -87,9 +155,7 @@ export default function Support() {
           Enviar
         </button>
         {submissionStatus === "success" && (
-          <div className="text-success mt-2">
-            ¡Mensaje enviado correctamente!
-          </div>
+          <div className="text-success mt-2">¡Mensaje enviado correctamente!</div>
         )}
       </form>
     </div>
@@ -102,40 +168,29 @@ export default function Support() {
           <div>
             <h4>Tutoriales</h4>
             <p>Guías paso a paso para usar CipherSafe:</p>
-            <ul>
-              <li>
-                <p>Qué es ciphersafe?</p>
-                <iframe
-                  width="640"
-                  height="360"
-                  src="https://www.youtube.com/embed/-tq52xQsKFs"
-                  title="Qué es ciphersafe video"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                ></iframe>
-              </li>
-              <li>
-                <iframe
-                  width="560"
-                  height="315"
-                  src="https://www.youtube.com/watch?v=pDCsTIH6uXw&list=RDpDCsTIH6uXw&start_radio=1"
-                  title="Cómo empezar con CipherSafe video"
-                  frameBorder="0"
-                  allowFullScreen
-                ></iframe>
-              </li>
-              <li>
-                <iframe
-                  width="560"
-                  height="315"
-                  src="https://www.youtube.com/watch?v=pDCsTIH6uXw&list=RDpDCsTIH6uXw&start_radio=1"
-                  title="Gestión de contraseñas seguras video"
-                  frameBorder="0"
-                  allowFullScreen
-                ></iframe>
-              </li>
-            </ul>
+
+            <div className="row">
+              {tutorials.map((tut, index) => (
+                <div className="col-md-6 mb-4" key={index}>
+                  <div className="card h-100 shadow-sm">
+                    <iframe
+                      className="card-img-top"
+                      width="100%"
+                      height="250"
+                      src={tut.videoUrl}
+                      title={tut.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                    <div className="card-body">
+                      <h5 className="card-title">{tut.title}</h5>
+                      <p className="card-text">{tut.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         );
       case "policies":
@@ -144,8 +199,22 @@ export default function Support() {
             <h4>Políticas</h4>
             <p>
               Respetamos tu privacidad. Revisa nuestros{" "}
-              <Link to="/PrivacyPolitics">términos y condiciones</Link> y{" "}
-              <Link to="/DataPolitics">políticas de uso de datos</Link>.
+              <a
+                href="/PrivacyPolitics"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                términos y condiciones
+              </a>{" "}
+              y{" "}
+              <a
+                href="/DataPolitics"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                políticas de uso de datos
+              </a>
+              .
             </p>
           </div>
         );
