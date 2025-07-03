@@ -16,9 +16,7 @@ export default function Navbar() {
         <ul className="navbar-nav ms-auto">
           {token ? (
             <>
-              <li className="nav-item">
-                <Link className="nav-link" to="/support">Soporte</Link>
-              </li>
+              
               <li className="nav-item">
                 <Link className="nav-link" to="/generate">Generar</Link>
               </li>
@@ -36,6 +34,9 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              <li className="nav-item">
+                <Link className="nav-link" to="/support">Soporte</Link>
+              </li>
               <li className="nav-item">
                 <Link className="nav-link" to="/login">Iniciar sesión</Link>
               </li>
